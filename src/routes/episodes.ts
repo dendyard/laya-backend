@@ -4,10 +4,8 @@ import { requireAdmin } from '../auth'
 
 function fmtEpisode(ep: any, base: string) {
   if (!ep) return ep
-  return {
-    ...ep,
-    musik_bg: ep.musik_bg?.startsWith('/') ? `${base}${ep.musik_bg}` : (ep.musik_bg ?? null),
-  }
+  const abs = (v: string | null) => v?.startsWith('/') ? `${base}${v}` : (v ?? null)
+  return { ...ep, musik_bg: abs(ep.musik_bg), card_image: abs(ep.card_image) }
 }
 
 export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
@@ -23,6 +21,54 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
     return { success: true, data: rows.map((r: any) => fmtEpisode(r, base)) }
   })
 
+  // Latest published episode per series (public feed)
+  .get('/latest', async ({ query: qs, request }: any) => {
+    const limit = Math.min(Math.max(parseInt(qs?.limit) || 10, 1), 50)
+    const base  = new URL(request.url).origin
+
+    // DISTINCT ON: ambil episode dengan number tertinggi dari tiap series yang published
+    const rows = await query<any>(
+      `SELECT DISTINCT ON (e.series_id)
+          e.id, e.series_id, e.number, e.title, e.publish_date,
+          e.is_locked, e.musik_bg, e.created_at,
+          e.card_image  AS episode_card_image,
+          s.title       AS series_title,
+          s.slug        AS series_slug,
+          s.subtitle    AS series_subtitle,
+          s.hero_image  AS series_hero_image,
+          s.card_image  AS series_card_image
+       FROM episodes e
+       JOIN series s ON s.id = e.series_id
+       WHERE e.is_published = 1
+         AND s.is_published = 1
+       ORDER BY e.series_id, e.number DESC
+       LIMIT ?`,
+      [limit]
+    )
+
+    return {
+      success: true,
+      data: rows.map((r: any) => ({
+        id:               r.id,
+        number:           r.number,
+        title:            r.title,
+        publish_date:     r.publish_date,
+        is_locked:        r.is_locked,
+        musik_bg:         r.musik_bg?.startsWith('/') ? `${base}${r.musik_bg}` : (r.musik_bg ?? null),
+        card_image:       r.episode_card_image?.startsWith('/') ? `${base}${r.episode_card_image}` : (r.episode_card_image ?? null),
+        created_at:       r.created_at,
+        series: {
+          id:         r.series_id,
+          title:      r.series_title,
+          slug:       r.series_slug,
+          subtitle:   r.series_subtitle,
+          hero_image: r.series_hero_image?.startsWith('/') ? `${base}${r.series_hero_image}` : (r.series_hero_image ?? null),
+          card_image: r.series_card_image?.startsWith('/') ? `${base}${r.series_card_image}` : (r.series_card_image ?? null),
+        },
+      })),
+    }
+  })
+
   .get('/:id', async ({ params, request, set }: any) => {
     const row = await queryOne<any>('SELECT * FROM episodes WHERE id = ? LIMIT 1', [params.id])
     if (!row) { set.status = 404; return { success: false, message: 'Episode not found' } }
@@ -31,7 +77,7 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
 
   .put('/:id', async ({ params, body, headers, request, set }: any) => {
     await requireAdmin(headers)
-    const allowed = ['number','title','publish_date','is_published','is_locked','musik_bg']
+    const allowed = ['number','title','publish_date','is_published','is_locked','musik_bg','card_image']
     const fields: string[] = []
     const values: unknown[] = []
     for (const k of allowed) {
