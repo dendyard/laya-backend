@@ -30,11 +30,13 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
     const rows = await query<any>(
       `SELECT DISTINCT ON (e.series_id)
           e.id, e.series_id, e.number, e.title, e.publish_date,
-          e.is_locked, e.musik_bg, e.card_image, e.created_at,
-          s.title  AS series_title,
-          s.slug   AS series_slug,
-          s.subtitle AS series_subtitle,
-          s.hero_image, s.card_image
+          e.is_locked, e.musik_bg, e.created_at,
+          e.card_image  AS episode_card_image,
+          s.title       AS series_title,
+          s.slug        AS series_slug,
+          s.subtitle    AS series_subtitle,
+          s.hero_image  AS series_hero_image,
+          s.card_image  AS series_card_image
        FROM episodes e
        JOIN series s ON s.id = e.series_id
        WHERE e.is_published = 1
@@ -53,15 +55,15 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
         publish_date:     r.publish_date,
         is_locked:        r.is_locked,
         musik_bg:         r.musik_bg?.startsWith('/') ? `${base}${r.musik_bg}` : (r.musik_bg ?? null),
-        card_image:       r.card_image?.startsWith('/') ? `${base}${r.card_image}` : (r.card_image ?? null),
+        card_image:       r.episode_card_image?.startsWith('/') ? `${base}${r.episode_card_image}` : (r.episode_card_image ?? null),
         created_at:       r.created_at,
         series: {
           id:         r.series_id,
           title:      r.series_title,
           slug:       r.series_slug,
           subtitle:   r.series_subtitle,
-          hero_image: r.hero_image?.startsWith('/') ? `${base}${r.hero_image}` : (r.hero_image ?? null),
-          card_image: r.card_image?.startsWith('/') ? `${base}${r.card_image}` : (r.card_image ?? null),
+          hero_image: r.series_hero_image?.startsWith('/') ? `${base}${r.series_hero_image}` : (r.series_hero_image ?? null),
+          card_image: r.series_card_image?.startsWith('/') ? `${base}${r.series_card_image}` : (r.series_card_image ?? null),
         },
       })),
     }
