@@ -1052,6 +1052,75 @@
         </div>
       </div>
 
+      <!-- ── USERS ────────────────────────────────────────────────────── -->
+      <div x-show="page === 'users'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Pengguna</div>
+            <div class="section-count" x-text="`${users.length} pengguna`"></div>
+          </div>
+          <button class="btn btn-primary" @click="openModal('user')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah Pengguna
+          </button>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama & Email</th>
+                <th>Role</th>
+                <th>Premium</th>
+                <th>Bergabung</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="users.length === 0">
+                <tr><td colspan="5">
+                  <div class="empty-state">
+                    <div class="empty-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div class="empty-title">Belum ada pengguna</div>
+                  </div>
+                </td></tr>
+              </template>
+              <template x-for="u in users" :key="u.id">
+                <tr>
+                  <td>
+                    <div class="strong" x-text="u.name"></div>
+                    <div style="font-size:.75rem;color:var(--text-3);margin-top:1px" x-text="u.email"></div>
+                  </td>
+                  <td>
+                    <span :class="u.role === 'admin' ? 'badge badge-purple' : u.role === 'editor' ? 'badge badge-blue' : 'badge badge-gray'"
+                      x-text="u.role"></span>
+                  </td>
+                  <td>
+                    <span :class="u.is_premium ? 'badge badge-green' : 'badge badge-gray'"
+                      x-text="u.is_premium ? 'Premium' : 'Free'"></span>
+                  </td>
+                  <td style="font-size:.75rem;color:var(--text-3)" x-text="fmtDate(u.created_at)"></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" @click="editUser(u)">Edit</button>
+                      <button class="btn btn-ghost btn-sm" @click="openPasswordModal(u)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        Password
+                      </button>
+                      <button class="btn-icon danger" @click="deleteUser(u.id)" title="Hapus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- ── SETTINGS ──────────────────────────────────────────────────── -->
       <div x-show="page === 'settings'">
         <div class="section-bar">
@@ -1171,6 +1240,107 @@
           <button type="submit" class="btn btn-primary" :disabled="formLoading || form._uploadLoading">
             <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
             <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Banner'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- User Modal -->
+<template x-if="modal === 'user'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Pengguna' : 'Tambah Pengguna'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveUser()">
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:.875rem">
+            <div class="form-group form-grid-1">
+              <label class="form-label">Nama <span class="req">*</span></label>
+              <input class="form-input" x-model="form.name" placeholder="Nama lengkap" required />
+            </div>
+            <div class="form-group form-grid-1">
+              <label class="form-label">Email <span class="req">*</span></label>
+              <input type="email" class="form-input" x-model="form.email" placeholder="user@email.com" required />
+            </div>
+            <template x-if="!form.id">
+              <div class="form-group form-grid-1">
+                <label class="form-label">Password <span class="req">*</span></label>
+                <input type="password" class="form-input" x-model="form.password" placeholder="Min. 6 karakter" required minlength="6" />
+              </div>
+            </template>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select class="form-select" x-model="form.role">
+                <option value="user">User</option>
+                <option value="editor">Editor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="form-group" style="align-self:end;padding-bottom:.125rem">
+              <label class="form-checkbox-row">
+                <input type="checkbox" class="form-checkbox" x-model="form.is_premium" />
+                <span class="form-checkbox-label">Akun Premium</span>
+              </label>
+            </div>
+            <template x-if="form.is_premium">
+              <div class="form-group form-grid-1">
+                <label class="form-label">Premium Sampai (opsional)</label>
+                <input type="date" class="form-input" x-model="form.premium_until" />
+              </div>
+            </template>
+          </div>
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Pengguna'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- User Password Modal -->
+<template x-if="modal === 'user-password'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header">
+        <div>
+          <span class="modal-title">Ubah Password</span>
+          <div style="font-size:.75rem;color:var(--text-3);margin-top:2px" x-text="form.name"></div>
+        </div>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="savePassword()">
+        <div class="modal-body">
+          <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:.875rem">
+            <div class="form-group">
+              <label class="form-label">Password Baru <span class="req">*</span></label>
+              <input type="password" class="form-input" x-model="form.password" placeholder="Min. 6 karakter" required minlength="6" autocomplete="new-password" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Konfirmasi Password <span class="req">*</span></label>
+              <input type="password" class="form-input" x-model="form.password_confirm" placeholder="Ulangi password" required autocomplete="new-password" />
+            </div>
+          </div>
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            Simpan Password
           </button>
         </div>
       </form>
@@ -1463,6 +1633,7 @@ function app() {
     _syncing: false,
     _urlTimer: null,
     series: [],
+    users: [],
     heroBanners: [],
     allEpisodes: [],
     allSlides: [],
@@ -1502,6 +1673,8 @@ function app() {
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M20 17l-5-5-3 3-2-2-3 3"/></svg>` },
       { id: 'categories', label: 'Kategori',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h8m-8 6h16"/></svg>` },
+      { id: 'users',      label: 'Pengguna',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>` },
       { id: 'settings',   label: 'Pengaturan',
         icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>` },
     ],
@@ -1573,6 +1746,7 @@ function app() {
       if (id === 'episodes')     this.loadAllEpisodes()
       if (id === 'slides')       this.loadAllSlides()
       if (id === 'hero-banners') this.loadHeroBanners()
+      if (id === 'users')        this.loadUsers()
     },
 
     async updateStats() {
@@ -1586,6 +1760,7 @@ function app() {
 
     // ── Data loaders ────────────────────────────────────────────────────
     async loadSeries()      { const r = await apiFetch('/series');         this.series      = r.data ?? [] },
+    async loadUsers()       { const r = await apiFetch('/users');          this.users       = r.data ?? [] },
     async loadHeroBanners() { const r = await apiFetch('/hero-banners');   this.heroBanners = r.data ?? [] },
     async loadCategories()  { const r = await apiFetch('/categories');     this.categories  = r.data ?? [] },
     async loadSettings()    { const r = await apiFetch('/settings');   this.settingsForm = { ...(r.data ?? {}) } },
@@ -1759,6 +1934,50 @@ function app() {
     get bannerEpisodes() {
       if (!this.form.series_id) return this.allEpisodes
       return this.allEpisodes.filter(ep => String(ep.series_id) === String(this.form.series_id))
+    },
+
+    // ── Users ────────────────────────────────────────────────────────────
+    editUser(u) {
+      this.form = { id: u.id, name: u.name, email: u.email, role: u.role,
+        is_premium: !!u.is_premium, premium_until: u.premium_until ?? '' }
+      this.formError = ''; this.modal = 'user'
+    },
+    async saveUser() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = { name: this.form.name, email: this.form.email, role: this.form.role,
+          is_premium: this.form.is_premium ? 1 : 0,
+          premium_until: this.form.premium_until || null }
+        if (this.form.id) {
+          await apiFetch(`/users/${this.form.id}`, { method:'PUT', body })
+        } else {
+          if (!this.form.password) throw new Error('Password wajib diisi')
+          await apiFetch('/users', { method:'POST', body: { ...body, password: this.form.password } })
+        }
+        await this.loadUsers()
+        this.closeModal(); this.toast('Pengguna berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteUser(id) {
+      if (!confirm('Hapus pengguna ini? Tindakan tidak dapat dibatalkan.')) return
+      try { await apiFetch(`/users/${id}`, { method:'DELETE' }); await this.loadUsers(); this.toast('Pengguna dihapus') }
+      catch(e) { this.toast(e.message, 'error') }
+    },
+    openPasswordModal(u) {
+      this.form = { id: u.id, name: u.name, password: '', password_confirm: '' }
+      this.formError = ''; this.modal = 'user-password'
+    },
+    async savePassword() {
+      this.formLoading = true; this.formError = ''
+      try {
+        if (!this.form.password) throw new Error('Password baru wajib diisi')
+        if (this.form.password !== this.form.password_confirm) throw new Error('Konfirmasi password tidak cocok')
+        if (this.form.password.length < 6) throw new Error('Password minimal 6 karakter')
+        await apiFetch(`/users/${this.form.id}/password`, { method:'PUT', body: { password: this.form.password } })
+        this.closeModal(); this.toast('Password berhasil diubah')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
     },
 
     // ── Categories ───────────────────────────────────────────────────────

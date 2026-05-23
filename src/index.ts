@@ -8,6 +8,7 @@ import { authRouter } from './routes/auth'
 import { categoriesRouter } from './routes/categories'
 import { settingsRouter } from './routes/settings'
 import { heroBannersRouter, uploadRouter } from './routes/hero_banners'
+import { usersRouter } from './routes/users'
 
 const PORT = 3001
 
@@ -24,6 +25,7 @@ const app = new Elysia()
   .use(settingsRouter)
   .use(heroBannersRouter)
   .use(uploadRouter)
+  .use(usersRouter)
 
   // ── API root ────────────────────────────────────────────────────────────
   .get('/api', () => ({
