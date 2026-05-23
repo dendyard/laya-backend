@@ -23,6 +23,51 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
     return { success: true, data: rows.map((r: any) => fmtEpisode(r, base)) }
   })
 
+  // Latest published episode per series (public feed)
+  .get('/latest', async ({ query: qs, request }: any) => {
+    const limit = Math.min(Math.max(parseInt(qs?.limit) || 10, 1), 50)
+    const base  = new URL(request.url).origin
+
+    // DISTINCT ON: ambil episode dengan number tertinggi dari tiap series yang published
+    const rows = await query<any>(
+      `SELECT DISTINCT ON (e.series_id)
+          e.id, e.series_id, e.number, e.title, e.publish_date,
+          e.is_locked, e.musik_bg, e.created_at,
+          s.title  AS series_title,
+          s.slug   AS series_slug,
+          s.subtitle AS series_subtitle,
+          s.hero_image, s.card_image
+       FROM episodes e
+       JOIN series s ON s.id = e.series_id
+       WHERE e.is_published = 1
+         AND s.is_published = 1
+       ORDER BY e.series_id, e.number DESC
+       LIMIT ?`,
+      [limit]
+    )
+
+    return {
+      success: true,
+      data: rows.map((r: any) => ({
+        id:               r.id,
+        number:           r.number,
+        title:            r.title,
+        publish_date:     r.publish_date,
+        is_locked:        r.is_locked,
+        musik_bg:         r.musik_bg?.startsWith('/') ? `${base}${r.musik_bg}` : (r.musik_bg ?? null),
+        created_at:       r.created_at,
+        series: {
+          id:       r.series_id,
+          title:    r.series_title,
+          slug:     r.series_slug,
+          subtitle: r.series_subtitle,
+          hero_image: r.hero_image,
+          card_image: r.card_image,
+        },
+      })),
+    }
+  })
+
   .get('/:id', async ({ params, request, set }: any) => {
     const row = await queryOne<any>('SELECT * FROM episodes WHERE id = ? LIMIT 1', [params.id])
     if (!row) { set.status = 404; return { success: false, message: 'Episode not found' } }
