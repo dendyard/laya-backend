@@ -1,0 +1,1811 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laya CMS — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    [x-cloak] { display: none !important; }
+
+    :root {
+      --brand:        #6366f1;
+      --brand-dark:   #4f46e5;
+      --brand-50:     #eef2ff;
+      --brand-100:    #e0e7ff;
+      --sidebar-bg:   #0f172a;
+      --sidebar-w:    248px;
+      --body-bg:      #f8fafc;
+      --card-bg:      #ffffff;
+      --border:       #e2e8f0;
+      --border-light: #f1f5f9;
+      --text-1:       #0f172a;
+      --text-2:       #475569;
+      --text-3:       #94a3b8;
+      --radius:       12px;
+      --radius-sm:    8px;
+      --radius-lg:    16px;
+    }
+
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text-1);
+      background: var(--body-bg);
+      line-height: 1.5;
+    }
+
+    /* ── Layout ── */
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 1.25rem 1rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand-mark {
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .brand-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      box-shadow: 0 0 0 1px rgba(99,102,241,.35), 0 4px 12px rgba(99,102,241,.3);
+    }
+    .brand-icon svg { width: 16px; height: 16px; }
+    .brand-name { font-weight: 700; font-size: .9375rem; color: #fff; letter-spacing: -.01em; }
+    .brand-ver  { font-size: .6875rem; color: #64748b; font-weight: 500; margin-top: 1px; }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: .75rem .75rem;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .sidebar-nav::-webkit-scrollbar { display: none; }
+
+    .nav-section-label {
+      font-size: .625rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #475569;
+      padding: .625rem .625rem .375rem;
+      margin-top: .25rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: .625rem;
+      padding: .5rem .625rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: .8125rem;
+      font-weight: 500;
+      color: #94a3b8;
+      transition: background .12s, color .12s;
+      user-select: none;
+      position: relative;
+    }
+    .nav-item:hover { background: rgba(255,255,255,.06); color: #cbd5e1; }
+    .nav-item.active {
+      background: rgba(99,102,241,.18);
+      color: #a5b4fc;
+    }
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 50%;
+      transform: translateY(-50%);
+      width: 3px; height: 18px;
+      background: var(--brand);
+      border-radius: 0 3px 3px 0;
+    }
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .85; }
+    .nav-item.active svg { opacity: 1; }
+    .nav-badge {
+      margin-left: auto;
+      background: rgba(99,102,241,.25);
+      color: #a5b4fc;
+      font-size: .625rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    .sidebar-footer {
+      padding: .875rem;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+    .user-card {
+      display: flex; align-items: center; gap: .625rem;
+      padding: .5rem .625rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .6875rem; font-weight: 700; color: #fff; flex-shrink: 0;
+    }
+    .user-name  { font-size: .8125rem; font-weight: 600; color: #e2e8f0; }
+    .user-role  { font-size: .6875rem; color: #64748b; }
+    .logout-btn {
+      margin-left: auto;
+      background: none; border: none; cursor: pointer;
+      color: #475569; display: flex; padding: .25rem;
+      border-radius: 6px;
+      transition: color .12s, background .12s;
+    }
+    .logout-btn:hover { color: #f87171; background: rgba(248,113,113,.1); }
+    .logout-btn svg { width: 15px; height: 15px; }
+
+    /* ── Main ── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .topbar {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 57px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+      position: sticky; top: 0; z-index: 20;
+    }
+    .topbar-left { display: flex; align-items: center; gap: .5rem; }
+    .breadcrumb  { display: flex; align-items: center; gap: .375rem; }
+    .breadcrumb-root { font-size: .8125rem; color: var(--text-3); }
+    .breadcrumb-sep  { color: var(--border); font-size: .875rem; }
+    .breadcrumb-curr { font-size: .8125rem; font-weight: 600; color: var(--text-1); }
+    .topbar-right { display: flex; align-items: center; gap: .5rem; }
+    .status-dot {
+      display: flex; align-items: center; gap: .375rem;
+      font-size: .75rem; color: var(--text-3);
+    }
+    .status-dot::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34,197,94,.2);
+    }
+
+    .content { flex: 1; overflow-y: auto; padding: 1.5rem; }
+
+    /* ── Stat cards ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.125rem 1.25rem;
+      display: flex; flex-direction: column; gap: .875rem;
+      transition: box-shadow .15s, transform .15s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.06); transform: translateY(-1px); }
+    .stat-head { display: flex; align-items: center; justify-content: space-between; }
+    .stat-label { font-size: .75rem; font-weight: 600; color: var(--text-3); letter-spacing: .04em; text-transform: uppercase; }
+    .stat-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stat-icon svg { width: 15px; height: 15px; }
+    .stat-icon.indigo { background: var(--brand-50); color: var(--brand); }
+    .stat-icon.violet { background: #f5f3ff; color: #7c3aed; }
+    .stat-icon.sky    { background: #f0f9ff; color: #0284c7; }
+    .stat-icon.amber  { background: #fffbeb; color: #d97706; }
+    .stat-value { font-size: 1.625rem; font-weight: 700; color: var(--text-1); letter-spacing: -.03em; line-height: 1; }
+    .stat-sub   { font-size: .75rem; color: var(--text-3); }
+
+    /* ── Page section header ── */
+    .section-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .section-title { font-size: .9375rem; font-weight: 600; color: var(--text-1); }
+    .section-count { font-size: .8125rem; color: var(--text-3); margin-top: 1px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: .375rem;
+      padding: .4375rem .875rem;
+      border-radius: var(--radius-sm);
+      font-size: .8125rem; font-weight: 600; font-family: inherit;
+      border: none; cursor: pointer;
+      transition: background .12s, box-shadow .12s, transform .08s, opacity .12s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    .btn-primary {
+      background: var(--brand); color: #fff;
+      box-shadow: 0 1px 3px rgba(99,102,241,.35);
+    }
+    .btn-primary:hover { background: var(--brand-dark); box-shadow: 0 3px 10px rgba(99,102,241,.4); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .btn-ghost {
+      background: transparent; color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--body-bg); }
+
+    .btn-danger-ghost {
+      background: transparent; color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .btn-danger-ghost:hover { background: #fef2f2; }
+
+    .btn-icon {
+      padding: .375rem;
+      border-radius: var(--radius-sm);
+      background: transparent; color: var(--text-3); border: none;
+    }
+    .btn-icon:hover { background: var(--border-light); color: var(--text-2); }
+    .btn-icon.danger:hover { background: #fef2f2; color: #dc2626; }
+    .btn-icon svg { width: 14px; height: 14px; }
+
+    .btn-sm { padding: .3125rem .625rem; font-size: .75rem; }
+
+    /* ── Card/Table wrapper ── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* ── Table ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead th {
+      padding: .625rem 1rem;
+      text-align: left;
+      font-size: .6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-3);
+      background: var(--body-bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-light);
+      transition: background .1s;
+    }
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table tbody tr:hover { background: #fafbfc; }
+    .data-table td {
+      padding: .75rem 1rem;
+      font-size: .8125rem;
+      color: var(--text-2);
+      vertical-align: middle;
+    }
+    .data-table td.strong { font-weight: 600; color: var(--text-1); }
+    .data-table td.mono   { font-family: 'SF Mono', Menlo, monospace; font-size: .75rem; color: var(--text-3); }
+
+    .table-actions { display: flex; gap: .25rem; align-items: center; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: .25rem;
+      padding: .1875rem .5rem;
+      border-radius: 99px;
+      font-size: .6875rem; font-weight: 600;
+    }
+    .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .badge-green  { background: #f0fdf4; color: #16a34a; }
+    .badge-yellow { background: #fefce8; color: #ca8a04; }
+    .badge-red    { background: #fef2f2; color: #dc2626; }
+    .badge-blue   { background: #eff6ff; color: #2563eb; }
+    .badge-purple { background: #faf5ff; color: #7c3aed; }
+    .badge-gray   { background: var(--body-bg); color: var(--text-3); }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    .empty-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--body-bg);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto .875rem;
+    }
+    .empty-icon svg { width: 22px; height: 22px; color: var(--text-3); }
+    .empty-title { font-size: .875rem; font-weight: 600; color: var(--text-2); margin-bottom: .25rem; }
+    .empty-sub   { font-size: .8125rem; color: var(--text-3); }
+
+    /* ── Slide cards (Slides page) ── */
+    .slide-grid { display: flex; flex-direction: column; gap: .625rem; }
+    .slide-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .slide-card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .625rem .875rem;
+      background: var(--body-bg);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .slide-num-badge {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: var(--brand-50); color: var(--brand);
+      font-size: .75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .slide-title-row { display: flex; align-items: center; gap: .5rem; }
+    .slide-video-chip {
+      display: inline-flex; align-items: center; gap: .25rem;
+      padding: .125rem .5rem; border-radius: 99px;
+      background: #f0fdf4; color: #16a34a;
+      font-size: .6875rem; font-weight: 600;
+    }
+    .slide-video-chip.no-video { background: var(--body-bg); color: var(--text-3); }
+    .slide-card-body { padding: .75rem .875rem; }
+    .slide-html-preview {
+      font-size: .8125rem; color: var(--text-2); line-height: 1.55;
+      max-height: 110px; overflow: hidden; position: relative;
+    }
+    .slide-html-preview::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 28px; background: linear-gradient(transparent, var(--card-bg));
+    }
+    .slide-html-preview h1, .slide-html-preview h2, .slide-html-preview h3 {
+      font-size: .875rem; font-weight: 600; color: var(--text-1); margin: 0 0 .2rem;
+    }
+    .slide-html-preview p { margin: 0 0 .2rem; }
+    .slide-html-preview blockquote {
+      border-left: 3px solid var(--brand); padding-left: .5rem;
+      color: var(--text-3); font-style: italic; margin: 0 0 .2rem;
+    }
+
+    /* ── Filter select ── */
+    .filter-select {
+      padding: .375rem .625rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: .8125rem; font-family: inherit; color: var(--text-1);
+      background: var(--card-bg); outline: none; cursor: pointer;
+      max-width: 200px;
+    }
+    .filter-select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+
+    /* ── Settings ── */
+    .settings-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      max-width: 580px;
+    }
+    .setting-row {
+      display: flex; align-items: center;
+      padding: .75rem 1.125rem;
+      border-bottom: 1px solid var(--border-light);
+      gap: 1rem;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-key {
+      font-size: .75rem; font-weight: 600; font-family: 'SF Mono', Menlo, monospace;
+      color: var(--text-3); width: 200px; flex-shrink: 0;
+    }
+
+    /* ── Info card (overview) ── */
+    .info-card {
+      background: var(--brand-50);
+      border: 1px solid var(--brand-100);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: .875rem;
+    }
+    .info-card svg { width: 18px; height: 18px; color: var(--brand); flex-shrink: 0; }
+    .info-card-text { font-size: .8125rem; color: #3730a3; }
+    .info-card-text code {
+      font-family: 'SF Mono', Menlo, monospace;
+      background: rgba(99,102,241,.12);
+      padding: .125rem .4375rem; border-radius: 5px;
+      font-size: .75rem;
+    }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(15,23,42,.55);
+      backdrop-filter: blur(3px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+      animation: fadeIn .15s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      width: 100%; max-width: 480px;
+      max-height: calc(100vh - 3rem);
+      overflow-y: auto;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.05),
+        0 25px 60px rgba(0,0,0,.22);
+      animation: slideUp .18s cubic-bezier(.34,1.56,.64,1);
+    }
+    .modal-wide { max-width: 620px; }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.125rem 1.375rem .875rem;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .modal-title { font-size: .9375rem; font-weight: 700; color: var(--text-1); }
+    .modal-close {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: transparent; border: none; cursor: pointer;
+      color: var(--text-3); display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s;
+    }
+    .modal-close:hover { background: var(--body-bg); color: var(--text-2); }
+    .modal-close svg { width: 15px; height: 15px; }
+
+    .modal-body { padding: 1.25rem 1.375rem; }
+    .modal-footer {
+      padding: .875rem 1.375rem 1.125rem;
+      border-top: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: flex-end; gap: .5rem;
+    }
+
+    /* ── Form fields ── */
+    .form-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: .875rem; }
+    .form-grid-1 { grid-column: 1 / -1; }
+    .form-group  { display: flex; flex-direction: column; gap: .3125rem; }
+    .form-label  { font-size: .75rem; font-weight: 600; color: var(--text-2); }
+    .form-label .req { color: #dc2626; margin-left: 2px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: .5625rem .75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: .8125rem; font-family: inherit; color: var(--text-1);
+      background: var(--body-bg);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--brand);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(99,102,241,.1);
+    }
+    .form-textarea { resize: vertical; min-height: 76px; }
+    .form-checkbox-row { display: flex; align-items: center; gap: .5rem; }
+    .form-checkbox { width: 15px; height: 15px; accent-color: var(--brand); cursor: pointer; }
+    .form-checkbox-label { font-size: .8125rem; font-weight: 500; color: var(--text-2); cursor: pointer; }
+
+    .form-err {
+      display: none; font-size: .8125rem; color: #dc2626;
+      background: #fef2f2; border: 1px solid #fecaca;
+      border-radius: var(--radius-sm); padding: .5rem .75rem;
+    }
+    .form-err.show { display: block; }
+
+    /* ── HTML editor ── */
+    .html-editor {
+      width: 100%; padding: .625rem .75rem;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      font-size: .8125rem; font-family: 'SF Mono', Menlo, monospace; color: var(--text-1);
+      background: var(--body-bg); outline: none;
+      resize: vertical; min-height: 260px; line-height: 1.65;
+    }
+    .html-editor:focus { border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+    .html-preview-box {
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: .75rem .875rem; background: #fff;
+      font-size: .875rem; line-height: 1.7; color: var(--text-1);
+      min-height: 80px;
+    }
+    .html-preview-box h1,.html-preview-box h2,.html-preview-box h3 { font-weight:600; margin:.25rem 0; }
+    .html-preview-box p { margin: 0 0 .5rem; }
+    .html-preview-box blockquote {
+      border-left: 3px solid var(--brand); padding-left: .625rem;
+      color: var(--text-3); font-style: italic; margin: 0 0 .5rem;
+    }
+    .html-preview-box img { max-width: 100%; border-radius: 6px; }
+    .editor-tabs { display:flex; gap:0; margin-bottom:.625rem; }
+    .editor-tab {
+      padding: .3rem .75rem; font-size:.75rem; font-weight:500; cursor:pointer;
+      border: 1px solid var(--border); background: var(--body-bg); color: var(--text-3);
+      transition: background .1s, color .1s;
+    }
+    .editor-tab:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .editor-tab:last-child  { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; border-left: none; }
+    .editor-tab.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .blocks-empty {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center; font-size: .8125rem; color: var(--text-3);
+    }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .65s linear infinite; }
+
+    /* ── Toast ── */
+    .toast-wrap {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      z-index: 100; display: flex; flex-direction: column; gap: .5rem;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: center; gap: .625rem;
+      padding: .75rem 1rem;
+      border-radius: var(--radius);
+      font-size: .8125rem; font-weight: 500; color: #fff;
+      box-shadow: 0 8px 24px rgba(0,0,0,.18);
+      pointer-events: all;
+      animation: toastIn .2s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes toastIn { from { opacity:0; transform: translateX(20px); } }
+    .toast.success { background: #111827; }
+    .toast.error   { background: #dc2626; }
+    .toast svg     { width: 15px; height: 15px; flex-shrink: 0; }
+    .toast.success svg { color: #4ade80; }
+    .toast.error   svg { color: #fca5a5; }
+
+    /* ── Scrollbar ── */
+    .content::-webkit-scrollbar { width: 5px; }
+    .content::-webkit-scrollbar-track { background: transparent; }
+    .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  </style>
+</head>
+<body x-data="app()" x-init="init()" x-cloak>
+<div class="layout">
+
+  <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-header">
+      <div class="brand-mark">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">Laya CMS</div>
+          <div class="brand-ver">v2.0 · Bun + Elysia</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu</div>
+
+      <template x-for="item in nav" :key="item.id">
+        <div class="nav-item" :class="{ active: page === item.id }"
+          @click="navigate(item.id)">
+          <span x-html="item.icon"></span>
+          <span x-text="item.label"></span>
+          <span class="nav-badge" x-show="item.badge && item.badge > 0" x-text="item.badge"></span>
+        </div>
+      </template>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" x-text="userInitials"></div>
+        <div>
+          <div class="user-name" x-text="user?.name ?? '—'"></div>
+          <div class="user-role" x-text="user?.role ?? ''"></div>
+        </div>
+        <button class="logout-btn" @click="logout()" title="Logout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══════════════════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="breadcrumb">
+          <span class="breadcrumb-root">Laya CMS</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-curr" x-text="currentLabel"></span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="status-dot">Server aktif</span>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── OVERVIEW ──────────────────────────────────────────────────── -->
+      <div x-show="page === 'overview'">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-head">
+              <span class="stat-label">Series</span>
+              <div class="stat-icon indigo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              </div>
+            </div>
+            <div>
+              <div class="stat-value" x-text="stats.series"></div>
+              <div class="stat-sub">serial konten</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-head">
+              <span class="stat-label">Episode</span>
+              <div class="stat-icon violet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </div>
+            </div>
+            <div>
+              <div class="stat-value" x-text="stats.episodes"></div>
+              <div class="stat-sub">total episode</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-head">
+              <span class="stat-label">Slide</span>
+              <div class="stat-icon sky">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+            </div>
+            <div>
+              <div class="stat-value" x-text="stats.slides"></div>
+              <div class="stat-sub">total slide</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-head">
+              <span class="stat-label">Kategori</span>
+              <div class="stat-icon amber">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h8m-8 6h16"/></svg>
+              </div>
+            </div>
+            <div>
+              <div class="stat-value" x-text="stats.categories"></div>
+              <div class="stat-sub">kategori aktif</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <div class="info-card-text">
+            API tersedia di <code>http://localhost:3001/api</code>
+            &nbsp;·&nbsp; Integrasi frontend: ganti mock di <code>laya-spa/src/api/content.js</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SERIES ────────────────────────────────────────────────────── -->
+      <div x-show="page === 'series'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Series</div>
+            <div class="section-count" x-text="`${series.length} series ditemukan`"></div>
+          </div>
+          <button class="btn btn-primary" @click="openModal('series')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah Series
+          </button>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Judul & Slug</th>
+                <th>Kategori</th>
+                <th>Status</th>
+                <th>Urutan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="series.length === 0">
+                <tr>
+                  <td colspan="5">
+                    <div class="empty-state">
+                      <div class="empty-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      </div>
+                      <div class="empty-title">Belum ada series</div>
+                      <div class="empty-sub">Buat series pertama Anda</div>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <template x-for="a in series" :key="a.id">
+                <tr>
+                  <td>
+                    <div class="strong" x-text="a.title"></div>
+                    <div class="mono" x-text="a.slug" style="margin-top:2px"></div>
+                    <div x-show="a.subtitle" style="font-size:.75rem;color:var(--text-3);margin-top:1px" x-text="a.subtitle"></div>
+                  </td>
+                  <td>
+                    <span x-show="a.category_name" class="badge badge-blue" x-text="a.category_name"></span>
+                    <span x-show="!a.category_name" style="color:var(--text-3)">—</span>
+                  </td>
+                  <td>
+                    <span :class="a.is_published ? 'badge badge-green' : 'badge badge-yellow'"
+                      x-text="a.is_published ? 'Publish' : 'Draft'"></span>
+                  </td>
+                  <td><span class="mono" x-text="a.sort_order"></span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" @click="editSeries(a)">Edit</button>
+                      <button class="btn btn-ghost btn-sm" @click="viewEpisodes(a)">
+                        Episode
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      </button>
+                      <button class="btn-icon danger" @click="deleteSeries(a.id)" title="Hapus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── EPISODES ───────────────────────────────────────────────────── -->
+      <div x-show="page === 'episodes'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Episode</div>
+            <div class="section-count" x-text="`${filteredEpisodes.length} episode`"></div>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select class="filter-select" x-model="filterSeriesId">
+              <option value="">Semua Series</option>
+              <template x-for="a in series" :key="a.id">
+                <option :value="String(a.id)" x-text="a.title"></option>
+              </template>
+            </select>
+            <button class="btn btn-primary" :disabled="!filterSeriesId" :title="!filterSeriesId ? 'Pilih series terlebih dahulu' : ''" @click="openModal('episode')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Tambah Episode
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>Judul Episode</th>
+                <th>Series</th>
+                <th>Tanggal Terbit</th>
+                <th>Visibilitas</th>
+                <th>Akses</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="filteredEpisodes.length === 0">
+                <tr><td colspan="7">
+                  <div class="empty-state">
+                    <div class="empty-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </div>
+                    <div class="empty-title">Belum ada episode</div>
+                    <div class="empty-sub" x-text="filterSeriesId ? 'Buat episode pertama untuk series ini' : 'Pilih series untuk filter, atau semua episode akan tampil di sini'"></div>
+                  </div>
+                </td></tr>
+              </template>
+              <template x-for="ep in filteredEpisodes" :key="ep.id">
+                <tr>
+                  <td><span class="badge badge-gray" x-text="ep.number"></span></td>
+                  <td class="strong" x-text="ep.title"></td>
+                  <td style="font-size:.8125rem;color:var(--text-3)" x-text="ep.series_title || '—'"></td>
+                  <td><span x-text="ep.publish_date || '—'" :style="!ep.publish_date ? 'color:var(--text-3)' : ''"></span></td>
+                  <td>
+                    <span :class="ep.is_published ? 'badge badge-green' : 'badge badge-yellow'"
+                      x-text="ep.is_published ? 'Publish' : 'Draft'"></span>
+                  </td>
+                  <td>
+                    <span :class="ep.is_locked ? 'badge badge-purple' : 'badge badge-green'"
+                      x-text="ep.is_locked ? 'Premium' : 'Gratis'"></span>
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" @click="editEpisode(ep)">Edit</button>
+                      <button class="btn btn-ghost btn-sm" @click="viewSlides(ep)">
+                        Slide
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                      </button>
+                      <button class="btn-icon danger" @click="deleteEpisode(ep.id)" title="Hapus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SLIDES ────────────────────────────────────────────────────── -->
+      <div x-show="page === 'slides'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Slide</div>
+            <div class="section-count" x-text="`${filteredSlides.length} slide`"></div>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <select class="filter-select" x-model="filterSeriesId" @change="filterEpisodeId=''">
+              <option value="">Semua Series</option>
+              <template x-for="a in series" :key="a.id">
+                <option :value="String(a.id)" x-text="a.title"></option>
+              </template>
+            </select>
+            <select class="filter-select" x-model="filterEpisodeId">
+              <option value="">Semua Episode</option>
+              <template x-for="ep in episodesForFilter" :key="ep.id">
+                <option :value="String(ep.id)" x-text="ep.title"></option>
+              </template>
+            </select>
+            <button class="btn btn-primary" :disabled="!filterEpisodeId" :title="!filterEpisodeId ? 'Pilih episode terlebih dahulu' : ''" @click="openModal('slide')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Tambah Slide
+            </button>
+          </div>
+        </div>
+
+        <div class="slide-grid">
+          <template x-if="filteredSlides.length === 0">
+            <div class="card">
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+                </div>
+                <div class="empty-title">Belum ada slide</div>
+                <div class="empty-sub" x-text="filterEpisodeId ? 'Buat slide pertama untuk episode ini' : 'Pilih episode untuk filter, atau semua slide akan tampil di sini'"></div>
+              </div>
+            </div>
+          </template>
+
+          <template x-for="sl in filteredSlides" :key="sl.id">
+            <div class="slide-card">
+              <div class="slide-card-header">
+                <div class="slide-title-row">
+                  <div class="slide-num-badge" x-text="sl.number"></div>
+                  <div>
+                    <div style="font-size:.8125rem;font-weight:600;color:var(--text-2)">Slide <span x-text="sl.number"></span></div>
+                    <div style="font-size:.7rem;color:var(--text-3)" x-text="sl.episode_title || ''"></div>
+                  </div>
+                  <span :class="sl.videoId ? 'slide-video-chip' : 'slide-video-chip no-video'">
+                    <svg viewBox="0 0 24 24" style="width:10px;height:10px" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span x-text="sl.videoId || 'no video'"></span>
+                  </span>
+                </div>
+                <div class="table-actions">
+                  <button class="btn btn-ghost btn-sm" @click="editSlide(sl)">Edit</button>
+                  <button class="btn-icon danger" @click="deleteSlide(sl.id)" title="Hapus">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="slide-card-body">
+                <template x-if="!sl.content">
+                  <div style="font-size:.75rem;color:var(--text-3);font-style:italic">Belum ada konten HTML</div>
+                </template>
+                <template x-if="sl.content">
+                  <div class="slide-html-preview" x-html="sl.content"></div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- ── HERO BANNERS ─────────────────────────────────────────────── -->
+      <div x-show="page === 'hero-banners'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Hero Banner</div>
+            <div class="section-count" x-text="`${heroBanners.length} banner`"></div>
+          </div>
+          <button class="btn btn-primary" @click="openModal('hero-banner')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah Banner
+          </button>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:80px">Gambar</th>
+                <th>Judul & Deskripsi</th>
+                <th>Series</th>
+                <th>Episode</th>
+                <th>Status</th>
+                <th>Urutan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="heroBanners.length === 0">
+                <tr><td colspan="7">
+                  <div class="empty-state">
+                    <div class="empty-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M20 17l-5-5-3 3-2-2-3 3"/></svg>
+                    </div>
+                    <div class="empty-title">Belum ada hero banner</div>
+                    <div class="empty-sub">Tambah banner pertama</div>
+                  </div>
+                </td></tr>
+              </template>
+              <template x-for="b in heroBanners" :key="b.id">
+                <tr>
+                  <td>
+                    <div style="width:64px;height:40px;border-radius:6px;overflow:hidden;background:var(--border-light);flex-shrink:0">
+                      <img :src="b.image_url" alt="" style="width:100%;height:100%;object-fit:cover" loading="lazy"
+                        onerror="this.style.display='none'" />
+                    </div>
+                  </td>
+                  <td>
+                    <div x-text="b.title || '—'" :style="!b.title ? 'color:var(--text-3)' : 'font-weight:600'"></div>
+                    <div x-show="b.description" style="font-size:.75rem;color:var(--text-3);margin-top:2px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" x-text="b.description"></div>
+                  </td>
+                  <td style="font-size:.8125rem;color:var(--text-3)" x-text="b.series_title || '—'"></td>
+                  <td style="font-size:.8125rem;color:var(--text-3)" x-text="b.episode_title || '—'"></td>
+                  <td>
+                    <span :class="b.is_active ? 'badge badge-green' : 'badge badge-yellow'"
+                      x-text="b.is_active ? 'Aktif' : 'Non-aktif'"></span>
+                  </td>
+                  <td><span class="mono" x-text="b.sort_order"></span></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" @click="editBanner(b)">Edit</button>
+                      <button class="btn-icon danger" @click="deleteBanner(b.id)" title="Hapus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── CATEGORIES ────────────────────────────────────────────────── -->
+      <div x-show="page === 'categories'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Kategori</div>
+            <div class="section-count" x-text="`${categories.length} kategori`"></div>
+          </div>
+          <button class="btn btn-primary" @click="openModal('category')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            Tambah Kategori
+          </button>
+        </div>
+
+        <div class="card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Slug</th>
+                <th>Dibuat</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-if="categories.length === 0">
+                <tr><td colspan="4">
+                  <div class="empty-state">
+                    <div class="empty-title">Belum ada kategori</div>
+                  </div>
+                </td></tr>
+              </template>
+              <template x-for="cat in categories" :key="cat.id">
+                <tr>
+                  <td class="strong" x-text="cat.name"></td>
+                  <td class="mono" x-text="cat.slug"></td>
+                  <td style="color:var(--text-3);font-size:.75rem" x-text="fmtDate(cat.created_at)"></td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-ghost btn-sm" @click="editCategory(cat)">Edit</button>
+                      <button class="btn-icon danger" @click="deleteCategory(cat.id)" title="Hapus">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS ──────────────────────────────────────────────────── -->
+      <div x-show="page === 'settings'">
+        <div class="section-bar">
+          <div>
+            <div class="section-title">Pengaturan</div>
+            <div class="section-count">Konfigurasi aplikasi</div>
+          </div>
+          <button class="btn btn-primary" @click="saveSettings()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Simpan
+          </button>
+        </div>
+        <div class="settings-card">
+          <template x-for="[k, v] in Object.entries(settingsForm)" :key="k">
+            <div class="setting-row">
+              <div class="setting-key" x-text="k"></div>
+              <input type="text" class="form-input" :value="v"
+                @input="settingsForm[k] = $event.target.value"
+                style="flex:1;margin:0" />
+            </div>
+          </template>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- ═══ MODALS ═══════════════════════════════════════════════════════════ -->
+
+<!-- Hero Banner Modal -->
+<template x-if="modal === 'hero-banner'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Banner' : 'Tambah Banner'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveBanner()">
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:.875rem">
+
+            <!-- Image upload -->
+            <div class="form-group form-grid-1">
+              <label class="form-label">Gambar Banner <span class="req">*</span></label>
+              <div style="display:flex;flex-direction:column;gap:.5rem">
+                <!-- Preview -->
+                <template x-if="form.image_url">
+                  <div style="width:100%;max-height:140px;border-radius:8px;overflow:hidden;background:var(--border-light)">
+                    <img :src="form.image_url" alt="preview" style="width:100%;max-height:140px;object-fit:cover;display:block" />
+                  </div>
+                </template>
+                <!-- Drop zone -->
+                <label style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem;border:2px dashed var(--border);border-radius:8px;cursor:pointer;font-size:.8125rem;color:var(--text-2);transition:border-color .15s"
+                  @dragover.prevent @drop.prevent="uploadBannerImage($event.dataTransfer.files[0])"
+                  :style="form._uploadLoading ? 'opacity:.6;pointer-events:none' : ''">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span x-text="form._uploadLoading ? 'Mengunggah…' : 'Klik atau seret gambar ke sini'"></span>
+                  <input type="file" accept="image/*" style="display:none"
+                    @change="uploadBannerImage($event.target.files[0]); $event.target.value=''" />
+                </label>
+                <div x-show="form._uploadError" style="font-size:.75rem;color:#ef4444" x-text="form._uploadError"></div>
+                <!-- Or paste URL -->
+                <input class="form-input" x-model="form.image_url" placeholder="Atau tempel URL gambar…" required />
+              </div>
+            </div>
+
+            <div class="form-group form-grid-1">
+              <label class="form-label">Judul (opsional)</label>
+              <input class="form-input" x-model="form.title" placeholder="Judul banner…" />
+            </div>
+
+            <div class="form-group form-grid-1">
+              <label class="form-label">Deskripsi (opsional)</label>
+              <textarea class="form-textarea" x-model="form.description" placeholder="Deskripsi singkat banner…"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Series</label>
+              <select class="form-select" x-model="form.series_id" @change="form.episode_id = ''">
+                <option value="">Tidak ada</option>
+                <template x-for="s in series" :key="s.id">
+                  <option :value="s.id" x-text="s.title"></option>
+                </template>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Episode</label>
+              <select class="form-select" x-model="form.episode_id">
+                <option value="">Tidak ada</option>
+                <template x-for="ep in bannerEpisodes" :key="ep.id">
+                  <option :value="ep.id" x-text="`Ep ${ep.number} — ${ep.title}`"></option>
+                </template>
+              </select>
+            </div>
+
+            <div class="form-group" style="align-self:end">
+              <label class="form-label">Sort Order</label>
+              <input type="number" class="form-input" x-model="form.sort_order" min="0" />
+            </div>
+
+            <div class="form-group" style="align-self:end;padding-bottom:.125rem">
+              <label class="form-checkbox-row">
+                <input type="checkbox" class="form-checkbox" x-model="form.is_active" />
+                <span class="form-checkbox-label">Aktifkan banner ini</span>
+              </label>
+            </div>
+
+          </div>
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading || form._uploadLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Banner'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- Series Modal -->
+<template x-if="modal === 'series'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Series' : 'Tambah Series'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveSeries()">
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:.875rem">
+            <div class="form-group">
+              <label class="form-label">Slug <span class="req">*</span></label>
+              <input class="form-input" x-model="form.slug" placeholder="tato-dayak" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kategori</label>
+              <select class="form-select" x-model="form.category_id">
+                <option value="">Tanpa Kategori</option>
+                <template x-for="cat in categories" :key="cat.id">
+                  <option :value="cat.id" x-text="cat.name"></option>
+                </template>
+              </select>
+            </div>
+            <div class="form-group form-grid-1">
+              <label class="form-label">Judul <span class="req">*</span></label>
+              <input class="form-input" x-model="form.title" placeholder="Tato Dayak Terakhir" required />
+            </div>
+            <div class="form-group form-grid-1">
+              <label class="form-label">Subjudul</label>
+              <input class="form-input" x-model="form.subtitle" placeholder="Bagian 1, Mengenal Pak Ding" />
+            </div>
+            <div class="form-group form-grid-1">
+              <label class="form-label">Deskripsi</label>
+              <textarea class="form-textarea" x-model="form.description" placeholder="Deskripsi serial..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hero Image URL</label>
+              <input class="form-input" x-model="form.hero_image" placeholder="/assets/hero.png" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Card Image URL</label>
+              <input class="form-input" x-model="form.card_image" placeholder="/assets/card.png" />
+            </div>
+            <div class="form-group" style="align-self:end">
+              <label class="form-label">Sort Order</label>
+              <input type="number" class="form-input" x-model="form.sort_order" min="0" />
+            </div>
+            <div class="form-group" style="align-self:end;padding-bottom:.125rem">
+              <label class="form-checkbox-row">
+                <input type="checkbox" class="form-checkbox" x-model="form.is_published" />
+                <span class="form-checkbox-label">Publish series ini</span>
+              </label>
+            </div>
+          </div>
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Series'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- Episode Modal -->
+<template x-if="modal === 'episode'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Episode' : 'Tambah Episode'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveEpisode()">
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:.875rem">
+            <div class="form-group">
+              <label class="form-label">Nomor Episode</label>
+              <input type="number" class="form-input" x-model="form.number" min="1" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tanggal Terbit</label>
+              <input class="form-input" x-model="form.publish_date" placeholder="1 Juni 2026" />
+            </div>
+            <div class="form-group form-grid-1">
+              <label class="form-label">Judul <span class="req">*</span></label>
+              <input class="form-input" x-model="form.title" placeholder="Mengenal Pak Ding" required />
+            </div>
+            <div class="form-group" style="align-self:center;padding-bottom:.125rem">
+              <label class="form-checkbox-row">
+                <input type="checkbox" class="form-checkbox" x-model="form.is_published" />
+                <span class="form-checkbox-label">Publish</span>
+              </label>
+            </div>
+            <div class="form-group" style="align-self:center;padding-bottom:.125rem">
+              <label class="form-checkbox-row">
+                <input type="checkbox" class="form-checkbox" x-model="form.is_locked" />
+                <span class="form-checkbox-label">Konten Premium (terkunci)</span>
+              </label>
+            </div>
+
+            <!-- Musik BG -->
+            <div class="form-group form-grid-1">
+              <label class="form-label">Musik Background (MP3)</label>
+              <div style="display:flex;flex-direction:column;gap:.5rem">
+                <template x-if="form.musik_bg">
+                  <div style="display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:var(--border-light);border-radius:8px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0;color:var(--brand)"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    <audio controls style="flex:1;height:28px" :src="form.musik_bg"></audio>
+                    <button type="button" @click="form.musik_bg=''" style="background:none;border:none;cursor:pointer;color:var(--text-3);padding:0;line-height:1">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                </template>
+                <label style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem;border:2px dashed var(--border);border-radius:8px;cursor:pointer;font-size:.8125rem;color:var(--text-2)"
+                  :style="form._audioLoading ? 'opacity:.6;pointer-events:none' : ''">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                  <span x-text="form._audioLoading ? 'Mengunggah…' : 'Upload file MP3'"></span>
+                  <input type="file" accept="audio/*,.mp3,.aac,.m4a,.ogg" style="display:none"
+                    @change="uploadEpisodeAudio($event.target.files[0]); $event.target.value=''" />
+                </label>
+                <div x-show="form._audioError" style="font-size:.75rem;color:#ef4444" x-text="form._audioError"></div>
+                <input class="form-input" x-model="form.musik_bg" placeholder="Atau tempel URL audio…" />
+              </div>
+            </div>
+
+          </div>
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading || form._audioLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Episode'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- Slide Modal -->
+<template x-if="modal === 'slide'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Slide' : 'Tambah Slide'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveSlide()">
+        <div class="modal-body">
+          <div class="form-grid" style="margin-bottom:1rem">
+            <div class="form-group">
+              <label class="form-label">Nomor Slide</label>
+              <input type="number" class="form-input" x-model="form.number" min="1" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Video ID <span style="color:var(--text-3);font-weight:400">(JX Player)</span></label>
+              <input class="form-input" x-model="form.video_id" placeholder="1931697" />
+            </div>
+          </div>
+
+          <!-- HTML editor -->
+          <div style="margin-bottom:.75rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+              <label class="form-label" style="margin:0">Konten HTML</label>
+              <div class="editor-tabs">
+                <button type="button" class="editor-tab" :class="{ active: slideTab==='edit' }" @click="slideTab='edit'">HTML</button>
+                <button type="button" class="editor-tab" :class="{ active: slideTab==='preview' }" @click="slideTab='preview'">Preview</button>
+              </div>
+            </div>
+            <template x-if="slideTab==='edit'">
+              <textarea class="html-editor" x-model="form.content"
+                placeholder="<h1>Judul</h1>&#10;<p>Paragraf pertama…</p>&#10;<blockquote>Kutipan…</blockquote>"></textarea>
+            </template>
+            <template x-if="slideTab==='preview'">
+              <div class="html-preview-box">
+                <template x-if="!form.content">
+                  <span style="color:var(--text-3);font-size:.8125rem;font-style:italic">Belum ada konten…</span>
+                </template>
+                <div x-html="form.content"></div>
+              </div>
+            </template>
+          </div>
+
+          <div class="form-err" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+            <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+            <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Slide'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- Category Modal -->
+<template x-if="modal === 'category'">
+  <div class="modal-backdrop" @click.self="closeModal()">
+    <div class="modal" style="max-width:380px">
+      <div class="modal-header">
+        <span class="modal-title" x-text="form.id ? 'Edit Kategori' : 'Tambah Kategori'"></span>
+        <button class="modal-close" @click="closeModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <form @submit.prevent="saveCategory()">
+        <div class="modal-body">
+          <div style="display:flex;flex-direction:column;gap:.875rem">
+            <div class="form-group">
+              <label class="form-label">Nama Kategori <span class="req">*</span></label>
+              <input class="form-input" x-model="form.name" placeholder="Laya Series" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Slug <span class="req">*</span></label>
+              <input class="form-input" x-model="form.slug" placeholder="laya-series" required />
+            </div>
+          </div>
+          <div class="form-err" style="margin-top:.875rem" :class="{ show: formError }" x-text="formError"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+            <span x-text="form.id ? 'Simpan' : 'Buat Kategori'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<!-- ═══ TOASTS ════════════════════════════════════════════════════════════ -->
+<div class="toast-wrap">
+  <template x-for="t in toasts" :key="t.id">
+    <div class="toast" :class="t.type">
+      <svg x-show="t.type === 'success'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      <svg x-show="t.type === 'error'"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span x-text="t.message"></span>
+    </div>
+  </template>
+</div>
+
+<!-- ═══ SCRIPT ═══════════════════════════════════════════════════════════ -->
+<script>
+const API = '/api'
+const getToken = () => localStorage.getItem('laya_token')
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...(opts.headers ?? {}) },
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+  })
+  const data = await res.json()
+  if (!res.ok && !data.success) throw new Error(data.message ?? 'Request gagal')
+  return data
+}
+
+function app() {
+  return {
+    // ── State ──────────────────────────────────────────────────────────
+    user: null,
+    page: 'overview',
+    modal: null,
+    form: {},
+    formLoading: false,
+    formError: '',
+    slideTab: 'edit',
+    toasts: [],
+    _syncing: false,
+    _urlTimer: null,
+    series: [],
+    heroBanners: [],
+    allEpisodes: [],
+    allSlides: [],
+    categories: [],
+    filterSeriesId: '',
+    filterEpisodeId: '',
+
+    // ── Computed ───────────────────────────────────────────────────────
+    get filteredEpisodes() {
+      if (!this.filterSeriesId) return this.allEpisodes
+      return this.allEpisodes.filter(ep => String(ep.series_id) === this.filterSeriesId)
+    },
+    get episodesForFilter() {
+      if (!this.filterSeriesId) return this.allEpisodes
+      return this.allEpisodes.filter(ep => String(ep.series_id) === this.filterSeriesId)
+    },
+    get filteredSlides() {
+      if (this.filterEpisodeId)
+        return this.allSlides.filter(sl => String(sl.episode_id) === this.filterEpisodeId)
+      if (this.filterSeriesId)
+        return this.allSlides.filter(sl => String(sl.series_id) === this.filterSeriesId)
+      return this.allSlides
+    },
+    settingsForm: {},
+    stats: { series: '—', episodes: '—', slides: '—', categories: '—' },
+
+    nav: [
+      { id: 'overview',   label: 'Beranda',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>` },
+      { id: 'series',     label: 'Series',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>` },
+      { id: 'episodes',   label: 'Episode',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>` },
+      { id: 'slides',     label: 'Slide',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>` },
+      { id: 'hero-banners', label: 'Hero Banner',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M20 17l-5-5-3 3-2-2-3 3"/></svg>` },
+      { id: 'categories', label: 'Kategori',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h8m-8 6h16"/></svg>` },
+      { id: 'settings',   label: 'Pengaturan',
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>` },
+    ],
+
+    get currentLabel() { return this.nav.find(n => n.id === this.page)?.label ?? '' },
+    get userInitials() {
+      const n = this.user?.name ?? ''
+      return n.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase() || '?'
+    },
+
+    // ── Init ───────────────────────────────────────────────────────────
+    // ── URL sync ───────────────────────────────────────────────────────
+    _buildURL() {
+      const p = new URLSearchParams()
+      if (this.page && this.page !== 'overview') p.set('page', this.page)
+      if (this.filterSeriesId) p.set('series', this.filterSeriesId)
+      if (this.filterEpisodeId) p.set('episode', this.filterEpisodeId)
+      return p.toString()
+    },
+    _pushURL() {
+      if (this._syncing) return
+      clearTimeout(this._urlTimer)
+      this._urlTimer = setTimeout(() => {
+        const qs = this._buildURL()
+        history.pushState({}, '', qs ? '?' + qs : location.pathname)
+      }, 0)
+    },
+    _readURL() {
+      const p = new URLSearchParams(location.search)
+      this.page           = p.get('page')    || 'overview'
+      this.filterSeriesId = p.get('series')  || ''
+      this.filterEpisodeId = p.get('episode') || ''
+    },
+
+    async init() {
+      const t = getToken()
+      if (!t) { location.href = '/admin/index.html'; return }
+      try {
+        const s = await apiFetch('/auth/session')
+        if (!s.data?.authenticated) { location.href = '/admin/index.html'; return }
+        this.user = s.data.user
+      } catch { location.href = '/admin/index.html'; return }
+
+      // Restore page + filters from URL before loading data
+      this._readURL()
+
+      await Promise.all([
+        this.loadSeries(), this.loadCategories(), this.loadSettings(),
+        this.loadAllEpisodes(), this.loadAllSlides(), this.loadHeroBanners(),
+      ])
+      this.updateStats()
+
+      // Start URL sync — set up AFTER init so restoring state doesn't push history
+      this.$watch('page',           () => this._pushURL())
+      this.$watch('filterSeriesId', () => this._pushURL())
+      this.$watch('filterEpisodeId', () => this._pushURL())
+
+      // Back / forward button support
+      window.addEventListener('popstate', () => {
+        this._syncing = true
+        this._readURL()
+        setTimeout(() => { this._syncing = false }, 0)
+      })
+    },
+
+    navigate(id) {
+      this.page = id
+      if (id === 'settings')     this.loadSettings()
+      if (id === 'episodes')     this.loadAllEpisodes()
+      if (id === 'slides')       this.loadAllSlides()
+      if (id === 'hero-banners') this.loadHeroBanners()
+    },
+
+    async updateStats() {
+      this.stats = {
+        series:     this.series.length,
+        episodes:   this.allEpisodes.length,
+        slides:     this.allSlides.length,
+        categories: this.categories.length,
+      }
+    },
+
+    // ── Data loaders ────────────────────────────────────────────────────
+    async loadSeries()      { const r = await apiFetch('/series');         this.series      = r.data ?? [] },
+    async loadHeroBanners() { const r = await apiFetch('/hero-banners');   this.heroBanners = r.data ?? [] },
+    async loadCategories()  { const r = await apiFetch('/categories');     this.categories  = r.data ?? [] },
+    async loadSettings()    { const r = await apiFetch('/settings');   this.settingsForm = { ...(r.data ?? {}) } },
+    async loadAllEpisodes() { const r = await apiFetch('/episodes');   this.allEpisodes = r.data ?? [] },
+    async loadAllSlides()   { const r = await apiFetch('/slides');     this.allSlides   = r.data ?? [] },
+
+    // ── Modal helpers ───────────────────────────────────────────────────
+    openModal(type) {
+      this.form = { id:null, slug:'', title:'', subtitle:'', description:'',
+        hero_image:'', card_image:'', category_id:'', sort_order:0, is_published:false,
+        number:1, publish_date:'', is_locked:true,
+        video_id:'', content:'', name:'',
+        musik_bg:'', _audioLoading:false, _audioError:'',
+        _uploadLoading:false, _uploadError:'' }
+      this.formError = ''; this.slideTab = 'edit'
+      this.modal = type
+    },
+    closeModal() { this.modal = null; this.formError = '' },
+
+    // ── Series ──────────────────────────────────────────────────────────
+    editSeries(a) {
+      this.form = { ...a, is_published: !!a.is_published }
+      this.formError = ''; this.modal = 'series'
+    },
+    async saveSeries() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = { slug: this.form.slug, title: this.form.title,
+          subtitle: this.form.subtitle, description: this.form.description,
+          hero_image: this.form.hero_image, card_image: this.form.card_image,
+          category_id: this.form.category_id || null,
+          is_published: this.form.is_published ? 1 : 0,
+          sort_order: Number(this.form.sort_order) || 0 }
+        if (this.form.id) await apiFetch(`/series/${this.form.id}`, { method:'PUT', body })
+        else              await apiFetch('/series', { method:'POST', body })
+        await this.loadSeries(); this.updateStats()
+        this.closeModal(); this.toast('Series berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteSeries(id) {
+      if (!confirm('Hapus series beserta semua episode dan slide-nya?')) return
+      try { await apiFetch(`/series/${id}`, { method:'DELETE' }); await this.loadSeries(); this.updateStats(); this.toast('Series dihapus') }
+      catch(e) { this.toast(e.message, 'error') }
+    },
+
+    // ── Episodes ─────────────────────────────────────────────────────────
+    async viewEpisodes(s) {
+      this.filterSeriesId = String(s.id)
+      this.filterEpisodeId = ''
+      await this.loadAllEpisodes()
+      this.page = 'episodes'
+    },
+    editEpisode(ep) {
+      this.form = { ...ep, is_published: !!ep.is_published, is_locked: !!ep.is_locked,
+        musik_bg: ep.musik_bg ?? '', _audioLoading: false, _audioError: '' }
+      this.formError = ''; this.modal = 'episode'
+    },
+    async uploadEpisodeAudio(file) {
+      if (!file) return
+      this.form._audioLoading = true; this.form._audioError = ''
+      try {
+        const fd = new FormData(); fd.append('file', file)
+        const token = localStorage.getItem('laya_token')
+        const res = await fetch('/api/upload', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: fd })
+        const json = await res.json()
+        if (!json.success) throw new Error(json.message)
+        this.form.musik_bg = json.url
+      } catch(e) { this.form._audioError = e.message }
+      finally { this.form._audioLoading = false }
+    },
+    async saveEpisode() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = { title: this.form.title, number: Number(this.form.number),
+          publish_date: this.form.publish_date,
+          is_published: this.form.is_published ? 1 : 0,
+          is_locked:    this.form.is_locked    ? 1 : 0,
+          musik_bg:     this.form.musik_bg     || null }
+        const seriesId = this.form.series_id || this.filterSeriesId
+        if (this.form.id) await apiFetch(`/episodes/${this.form.id}`, { method:'PUT', body })
+        else              await apiFetch(`/series/${seriesId}/episodes`, { method:'POST', body })
+        await this.loadAllEpisodes()
+        this.closeModal(); this.toast('Episode berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteEpisode(id) {
+      if (!confirm('Hapus episode ini?')) return
+      try {
+        await apiFetch(`/episodes/${id}`, { method:'DELETE' })
+        await this.loadAllEpisodes()
+        this.toast('Episode dihapus')
+      } catch(e) { this.toast(e.message, 'error') }
+    },
+
+    // ── Slides ───────────────────────────────────────────────────────────
+    async viewSlides(episode) {
+      this.filterSeriesId  = String(episode.series_id)
+      this.filterEpisodeId = String(episode.id)
+      await this.loadAllSlides()
+      this.page = 'slides'
+    },
+    editSlide(sl) {
+      this.form = { id: sl.id, number: sl.number, video_id: sl.videoId ?? '', content: sl.content ?? '' }
+      this.slideTab = 'edit'; this.formError = ''; this.modal = 'slide'
+    },
+    async saveSlide() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = { number: Number(this.form.number), video_id: this.form.video_id || null,
+          content: this.form.content || '' }
+        if (this.form.id) await apiFetch(`/slides/${this.form.id}`, { method:'PUT', body })
+        else              await apiFetch(`/episodes/${this.filterEpisodeId}/slides`, { method:'POST', body })
+        await this.loadAllSlides()
+        this.closeModal(); this.toast('Slide berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteSlide(id) {
+      if (!confirm('Hapus slide ini?')) return
+      try {
+        await apiFetch(`/slides/${id}`, { method:'DELETE' })
+        await this.loadAllSlides()
+        this.toast('Slide dihapus')
+      } catch(e) { this.toast(e.message, 'error') }
+    },
+
+    // ── Hero Banners ─────────────────────────────────────────────────────
+    editBanner(b) {
+      this.form = { ...b, is_active: !!b.is_active, _uploadLoading: false, _uploadError: '' }
+      this.formError = ''; this.modal = 'hero-banner'
+    },
+    async uploadBannerImage(file) {
+      if (!file) return
+      this.form._uploadLoading = true; this.form._uploadError = ''
+      try {
+        const fd = new FormData(); fd.append('file', file)
+        const token = localStorage.getItem('laya_token')
+        const res = await fetch('/api/upload', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: fd })
+        const json = await res.json()
+        if (!json.success) throw new Error(json.message)
+        this.form.image_url = json.url
+      } catch(e) { this.form._uploadError = e.message }
+      finally { this.form._uploadLoading = false }
+    },
+    async saveBanner() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = {
+          title:       this.form.title       || null,
+          description: this.form.description || null,
+          image_url:   this.form.image_url,
+          series_id:   this.form.series_id   || null,
+          episode_id:  this.form.episode_id  || null,
+          is_active:   this.form.is_active   ? 1 : 0,
+          sort_order:  Number(this.form.sort_order) || 0,
+        }
+        if (this.form.id) await apiFetch(`/hero-banners/${this.form.id}`, { method:'PUT', body })
+        else              await apiFetch('/hero-banners', { method:'POST', body })
+        await this.loadHeroBanners()
+        this.closeModal(); this.toast('Banner berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteBanner(id) {
+      if (!confirm('Hapus hero banner ini?')) return
+      try { await apiFetch(`/hero-banners/${id}`, { method:'DELETE' }); await this.loadHeroBanners(); this.toast('Banner dihapus') }
+      catch(e) { this.toast(e.message, 'error') }
+    },
+    get bannerEpisodes() {
+      if (!this.form.series_id) return this.allEpisodes
+      return this.allEpisodes.filter(ep => String(ep.series_id) === String(this.form.series_id))
+    },
+
+    // ── Categories ───────────────────────────────────────────────────────
+    editCategory(cat) { this.form = { ...cat }; this.formError = ''; this.modal = 'category' },
+    async saveCategory() {
+      this.formLoading = true; this.formError = ''
+      try {
+        const body = { name: this.form.name, slug: this.form.slug }
+        if (this.form.id) await apiFetch(`/categories/${this.form.id}`, { method:'PUT', body })
+        else              await apiFetch('/categories', { method:'POST', body })
+        await this.loadCategories()
+        this.closeModal(); this.toast('Kategori berhasil disimpan')
+      } catch(e) { this.formError = e.message }
+      finally { this.formLoading = false }
+    },
+    async deleteCategory(id) {
+      if (!confirm('Hapus kategori ini?')) return
+      try { await apiFetch(`/categories/${id}`, { method:'DELETE' }); await this.loadCategories(); this.toast('Kategori dihapus') }
+      catch(e) { this.toast(e.message, 'error') }
+    },
+
+    // ── Settings ─────────────────────────────────────────────────────────
+    async saveSettings() {
+      try { await apiFetch('/settings', { method:'POST', body: this.settingsForm }); this.toast('Pengaturan disimpan') }
+      catch(e) { this.toast(e.message, 'error') }
+    },
+
+    // ── Auth ─────────────────────────────────────────────────────────────
+    async logout() {
+      try { await apiFetch('/auth/logout', { method:'POST' }) } catch {}
+      localStorage.clear(); location.href = '/admin/index.html'
+    },
+
+    // ── Toast system ─────────────────────────────────────────────────────
+    toast(message, type = 'success') {
+      const id = Date.now()
+      this.toasts.push({ id, message, type })
+      setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id) }, 3200)
+    },
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    fmtDate(d) {
+      if (!d) return '—'
+      return new Date(d).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })
+    },
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+import { Elysia } from 'elysia'
+import { query, queryOne, run } from '../db'
+import { requireAdmin } from '../auth'
+
+function fmtEpisode(ep: any, base: string) {
+  if (!ep) return ep
+  return {
+    ...ep,
+    musik_bg: ep.musik_bg?.startsWith('/') ? `${base}${ep.musik_bg}` : (ep.musik_bg ?? null),
+  }
+}
+
+export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
+
+  .get('/', async ({ request }: any) => {
+    const rows = await query<any>(
+      `SELECT e.*, s.title AS series_title, s.slug AS series_slug
+       FROM episodes e
+       JOIN series s ON s.id = e.series_id
+       ORDER BY s.sort_order ASC, s.id ASC, e.number ASC`
+    )
+    const base = new URL(request.url).origin
+    return { success: true, data: rows.map((r: any) => fmtEpisode(r, base)) }
+  })
+
+  .get('/:id', async ({ params, request, set }: any) => {
+    const row = await queryOne<any>('SELECT * FROM episodes WHERE id = ? LIMIT 1', [params.id])
+    if (!row) { set.status = 404; return { success: false, message: 'Episode not found' } }
+    return { success: true, data: fmtEpisode(row, new URL(request.url).origin) }
+  })
+
+  .put('/:id', async ({ params, body, headers, request, set }: any) => {
+    await requireAdmin(headers)
+    const allowed = ['number','title','publish_date','is_published','is_locked','musik_bg']
+    const fields: string[] = []
+    const values: unknown[] = []
+    for (const k of allowed) {
+      if (k in body) { fields.push(`${k} = ?`); values.push((body as any)[k]) }
+    }
+    if (!fields.length) { set.status = 422; return { success: false, message: 'Nothing to update' } }
+    values.push(params.id)
+    await run(`UPDATE episodes SET ${fields.join(',')} WHERE id = ?`, values)
+    const ep = await queryOne<any>('SELECT * FROM episodes WHERE id = ?', [params.id])
+    return { success: true, data: fmtEpisode(ep, new URL(request.url).origin) }
+  })
+
+  .delete('/:id', async ({ params, headers, set }: any) => {
+    await requireAdmin(headers)
+    const r = await run('DELETE FROM episodes WHERE id = ?', [params.id])
+    if (!r.affectedRows) { set.status = 404; return { success: false, message: 'Episode not found' } }
+    return { success: true, message: 'Episode deleted' }
+  })
+
+  .get('/:id/slides', async ({ params }) => {
+    const slides = await query<any>('SELECT * FROM slides WHERE episode_id = ? ORDER BY number ASC', [params.id])
+    return {
+      success: true,
+      data: slides.map((s: any) => ({
+        id: s.id, number: s.number, videoId: s.video_id, content: s.content ?? '',
+      })),
+    }
+  })
+
+  .post('/:id/slides', async ({ params, body, headers, set }: any) => {
+    await requireAdmin(headers)
+    const { number = 1, video_id, content = '' } = body ?? {}
+    const r = await run(
+      'INSERT INTO slides (episode_id,number,video_id,content) VALUES (?,?,?,?)',
+      [params.id, number, video_id ?? null, content]
+    )
+    const slide = await queryOne<any>('SELECT * FROM slides WHERE id = ?', [r.insertId])
+    set.status = 201
+    return { success: true, data: { id: slide!.id, number: slide!.number, videoId: slide!.video_id, content: slide!.content ?? '' } }
+  })
