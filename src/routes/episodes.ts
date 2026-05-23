@@ -57,12 +57,12 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
         musik_bg:         r.musik_bg?.startsWith('/') ? `${base}${r.musik_bg}` : (r.musik_bg ?? null),
         created_at:       r.created_at,
         series: {
-          id:       r.series_id,
-          title:    r.series_title,
-          slug:     r.series_slug,
-          subtitle: r.series_subtitle,
-          hero_image: r.hero_image,
-          card_image: r.card_image,
+          id:         r.series_id,
+          title:      r.series_title,
+          slug:       r.series_slug,
+          subtitle:   r.series_subtitle,
+          hero_image: r.hero_image?.startsWith('/') ? `${base}${r.hero_image}` : (r.hero_image ?? null),
+          card_image: r.card_image?.startsWith('/') ? `${base}${r.card_image}` : (r.card_image ?? null),
         },
       })),
     }
