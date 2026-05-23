@@ -1386,14 +1386,27 @@
               <label class="form-label">Deskripsi</label>
               <textarea class="form-textarea" x-model="form.description" placeholder="Deskripsi serial..."></textarea>
             </div>
-            <div class="form-group">
-              <label class="form-label">Hero Image URL</label>
-              <input class="form-input" x-model="form.hero_image" placeholder="/assets/hero.png" />
+            <!-- Hero Image Upload -->
+            <div class="form-group form-grid-1">
+              <label class="form-label">Hero Image</label>
+              <div style="display:flex;flex-direction:column;gap:.5rem">
+                <template x-if="form.hero_image">
+                  <div style="width:100%;max-height:120px;border-radius:8px;overflow:hidden;background:var(--border-light)">
+                    <img :src="form.hero_image" style="width:100%;max-height:120px;object-fit:cover;display:block" />
+                  </div>
+                </template>
+                <label style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem;border:2px dashed var(--border);border-radius:8px;cursor:pointer;font-size:.8125rem;color:var(--text-2)"
+                  :style="form._heroLoading ? 'opacity:.6;pointer-events:none' : ''">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span x-text="form._heroLoading ? 'Mengunggah…' : 'Upload Hero Image'"></span>
+                  <input type="file" accept="image/*" style="display:none"
+                    @change="uploadSeriesHero($event.target.files[0]); $event.target.value=''" />
+                </label>
+                <div x-show="form._heroError" style="font-size:.75rem;color:#ef4444" x-text="form._heroError"></div>
+                <input class="form-input" x-model="form.hero_image" placeholder="Atau tempel URL gambar…" />
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Card Image URL</label>
-              <input class="form-input" x-model="form.card_image" placeholder="/assets/card.png" />
-            </div>
+
             <div class="form-group" style="align-self:end">
               <label class="form-label">Sort Order</label>
               <input type="number" class="form-input" x-model="form.sort_order" min="0" />
@@ -1409,7 +1422,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
-          <button type="submit" class="btn btn-primary" :disabled="formLoading">
+          <button type="submit" class="btn btn-primary" :disabled="formLoading || form._heroLoading">
             <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
             <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Series'"></span>
           </button>
@@ -1457,6 +1470,27 @@
               </label>
             </div>
 
+            <!-- Card Image Upload -->
+            <div class="form-group form-grid-1">
+              <label class="form-label">Card Image</label>
+              <div style="display:flex;flex-direction:column;gap:.5rem">
+                <template x-if="form.card_image">
+                  <div style="width:100%;max-height:100px;border-radius:8px;overflow:hidden;background:var(--border-light)">
+                    <img :src="form.card_image" style="width:100%;max-height:100px;object-fit:cover;display:block" />
+                  </div>
+                </template>
+                <label style="display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.625rem;border:2px dashed var(--border);border-radius:8px;cursor:pointer;font-size:.8125rem;color:var(--text-2)"
+                  :style="form._cardLoading ? 'opacity:.6;pointer-events:none' : ''">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span x-text="form._cardLoading ? 'Mengunggah…' : 'Upload Card Image'"></span>
+                  <input type="file" accept="image/*" style="display:none"
+                    @change="uploadEpisodeCard($event.target.files[0]); $event.target.value=''" />
+                </label>
+                <div x-show="form._cardError" style="font-size:.75rem;color:#ef4444" x-text="form._cardError"></div>
+                <input class="form-input" x-model="form.card_image" placeholder="Atau tempel URL gambar…" />
+              </div>
+            </div>
+
             <!-- Musik BG -->
             <div class="form-group form-grid-1">
               <label class="form-label">Musik Background (MP3)</label>
@@ -1487,7 +1521,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-ghost" @click="closeModal()">Batal</button>
-          <button type="submit" class="btn btn-primary" :disabled="formLoading || form._audioLoading">
+          <button type="submit" class="btn btn-primary" :disabled="formLoading || form._audioLoading || form._cardLoading || form._heroLoading">
             <svg x-show="formLoading" class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
             <span x-text="form.id ? 'Simpan Perubahan' : 'Buat Episode'"></span>
           </button>
@@ -1774,6 +1808,8 @@ function app() {
         number:1, publish_date:'', is_locked:true,
         video_id:'', content:'', name:'',
         musik_bg:'', _audioLoading:false, _audioError:'',
+        card_image:'', _cardLoading:false, _cardError:'',
+        hero_image:'', _heroLoading:false, _heroError:'',
         _uploadLoading:false, _uploadError:'' }
       this.formError = ''; this.slideTab = 'edit'
       this.modal = type
@@ -1782,15 +1818,17 @@ function app() {
 
     // ── Series ──────────────────────────────────────────────────────────
     editSeries(a) {
-      this.form = { ...a, is_published: !!a.is_published }
+      this.form = { ...a, is_published: !!a.is_published,
+        hero_image: a.hero_image ?? '', _heroLoading: false, _heroError: '' }
       this.formError = ''; this.modal = 'series'
     },
+    async uploadSeriesHero(file) { await this._uploadFile(file, 'hero_image', '_heroLoading', '_heroError') },
     async saveSeries() {
       this.formLoading = true; this.formError = ''
       try {
         const body = { slug: this.form.slug, title: this.form.title,
           subtitle: this.form.subtitle, description: this.form.description,
-          hero_image: this.form.hero_image, card_image: this.form.card_image,
+          hero_image: this.form.hero_image || null,
           category_id: this.form.category_id || null,
           is_published: this.form.is_published ? 1 : 0,
           sort_order: Number(this.form.sort_order) || 0 }
@@ -1816,22 +1854,25 @@ function app() {
     },
     editEpisode(ep) {
       this.form = { ...ep, is_published: !!ep.is_published, is_locked: !!ep.is_locked,
-        musik_bg: ep.musik_bg ?? '', _audioLoading: false, _audioError: '' }
+        musik_bg: ep.musik_bg ?? '', _audioLoading: false, _audioError: '',
+        card_image: ep.card_image ?? '', _cardLoading: false, _cardError: '' }
       this.formError = ''; this.modal = 'episode'
     },
-    async uploadEpisodeAudio(file) {
+    async _uploadFile(file, field, loadingKey, errorKey) {
       if (!file) return
-      this.form._audioLoading = true; this.form._audioError = ''
+      this.form[loadingKey] = true; this.form[errorKey] = ''
       try {
         const fd = new FormData(); fd.append('file', file)
         const token = localStorage.getItem('laya_token')
         const res = await fetch('/api/upload', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: fd })
         const json = await res.json()
         if (!json.success) throw new Error(json.message)
-        this.form.musik_bg = json.url
-      } catch(e) { this.form._audioError = e.message }
-      finally { this.form._audioLoading = false }
+        this.form[field] = json.url
+      } catch(e) { this.form[errorKey] = e.message }
+      finally { this.form[loadingKey] = false }
     },
+    async uploadEpisodeAudio(file) { await this._uploadFile(file, 'musik_bg',   '_audioLoading', '_audioError') },
+    async uploadEpisodeCard(file)  { await this._uploadFile(file, 'card_image', '_cardLoading',  '_cardError')  },
     async saveEpisode() {
       this.formLoading = true; this.formError = ''
       try {
@@ -1839,7 +1880,8 @@ function app() {
           publish_date: this.form.publish_date,
           is_published: this.form.is_published ? 1 : 0,
           is_locked:    this.form.is_locked    ? 1 : 0,
-          musik_bg:     this.form.musik_bg     || null }
+          musik_bg:     this.form.musik_bg     || null,
+          card_image:   this.form.card_image   || null }
         const seriesId = this.form.series_id || this.filterSeriesId
         if (this.form.id) await apiFetch(`/episodes/${this.form.id}`, { method:'PUT', body })
         else              await apiFetch(`/series/${seriesId}/episodes`, { method:'POST', body })

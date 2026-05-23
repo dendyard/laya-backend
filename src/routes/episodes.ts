@@ -4,10 +4,8 @@ import { requireAdmin } from '../auth'
 
 function fmtEpisode(ep: any, base: string) {
   if (!ep) return ep
-  return {
-    ...ep,
-    musik_bg: ep.musik_bg?.startsWith('/') ? `${base}${ep.musik_bg}` : (ep.musik_bg ?? null),
-  }
+  const abs = (v: string | null) => v?.startsWith('/') ? `${base}${v}` : (v ?? null)
+  return { ...ep, musik_bg: abs(ep.musik_bg), card_image: abs(ep.card_image) }
 }
 
 export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
@@ -32,7 +30,7 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
     const rows = await query<any>(
       `SELECT DISTINCT ON (e.series_id)
           e.id, e.series_id, e.number, e.title, e.publish_date,
-          e.is_locked, e.musik_bg, e.created_at,
+          e.is_locked, e.musik_bg, e.card_image, e.created_at,
           s.title  AS series_title,
           s.slug   AS series_slug,
           s.subtitle AS series_subtitle,
@@ -55,6 +53,7 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
         publish_date:     r.publish_date,
         is_locked:        r.is_locked,
         musik_bg:         r.musik_bg?.startsWith('/') ? `${base}${r.musik_bg}` : (r.musik_bg ?? null),
+        card_image:       r.card_image?.startsWith('/') ? `${base}${r.card_image}` : (r.card_image ?? null),
         created_at:       r.created_at,
         series: {
           id:         r.series_id,
@@ -76,7 +75,7 @@ export const episodesRouter = new Elysia({ prefix: '/api/episodes' })
 
   .put('/:id', async ({ params, body, headers, request, set }: any) => {
     await requireAdmin(headers)
-    const allowed = ['number','title','publish_date','is_published','is_locked','musik_bg']
+    const allowed = ['number','title','publish_date','is_published','is_locked','musik_bg','card_image']
     const fields: string[] = []
     const values: unknown[] = []
     for (const k of allowed) {

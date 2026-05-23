@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS episodes (
   is_published SMALLINT      NOT NULL DEFAULT 0,
   is_locked    SMALLINT      NOT NULL DEFAULT 1,
   musik_bg     VARCHAR(500),
+  card_image   VARCHAR(500),
   created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
